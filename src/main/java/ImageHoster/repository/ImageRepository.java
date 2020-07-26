@@ -1,6 +1,7 @@
 package ImageHoster.repository;
 
 import ImageHoster.model.Image;
+import ImageHoster.model.Comments;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.*;
@@ -50,11 +51,22 @@ public class ImageRepository {
     //Executes JPQL query to fetch the image from the database with corresponding title
     //Returns the image in case the image is found in the database
     //Returns null if no image is found in the database
-    public Image getImageByTitle(String title) {
+    public Image getImageByID(int id) {
         EntityManager em = emf.createEntityManager();
         try {
-            TypedQuery<Image> typedQuery = em.createQuery("SELECT i from Image i where i.title =:title", Image.class).setParameter("title", title);
+            TypedQuery<Image> typedQuery = em.createQuery("SELECT i from Image i where i.id =:id", Image.class).setParameter("id", id);
             return typedQuery.getSingleResult();
+        } catch (NoResultException nre) {
+            return null;
+        }
+    }
+
+    public List<Comments> getCommentsByID(int image_id) {
+        System.out.println("SUC3");
+        EntityManager em = emf.createEntityManager();
+        try {
+            TypedQuery<Comments> typedQuery = em.createQuery("SELECT c from Comments c where c.image.id =:image_id", Comments.class).setParameter("image_id", image_id);
+            return typedQuery.getResultList();
         } catch (NoResultException nre) {
             return null;
         }
@@ -82,6 +94,19 @@ public class ImageRepository {
         try {
             transaction.begin();
             em.merge(updatedImage);
+            transaction.commit();
+        } catch (Exception e) {
+            transaction.rollback();
+        }
+    }
+
+    public void updateComment(Comments comment) {
+        EntityManager em = emf.createEntityManager();
+        EntityTransaction transaction = em.getTransaction();
+
+        try {
+            transaction.begin();
+            em.merge(comment);
             transaction.commit();
         } catch (Exception e) {
             transaction.rollback();

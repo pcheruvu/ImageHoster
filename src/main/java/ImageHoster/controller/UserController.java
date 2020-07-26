@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.servlet.http.HttpSession;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 @Controller
@@ -28,6 +30,7 @@ public class UserController {
     //This method declares User type and UserProfile type object
     //Sets the user profile with UserProfile type object
     //Adds User type object to a model and returns 'users/registration.html' file
+
     @RequestMapping("users/registration")
     public String registration(Model model) {
         User user = new User();
@@ -40,11 +43,30 @@ public class UserController {
     //This controller method is called when the request pattern is of type 'users/registration' and also the incoming request is of POST type
     //This method calls the business logic and after the user record is persisted in the database, directs to login page
     @RequestMapping(value = "users/registration", method = RequestMethod.POST)
-    public String registerUser(User user) {
-        userService.registerUser(user);
-        return "redirect:/users/login";
+    public String registerUser(User user,Model model) {
+        String pwd = user.getPassword();
+        Boolean validateRes = ValidatePwd(pwd);
+        if (validateRes) {
+            userService.registerUser(user);
+            return "users/login";
+        } else {
+            user = new User();
+            UserProfile profile = new UserProfile();
+            user.setProfile(profile);
+            model.addAttribute("User", user);
+            String error = "Password must contain atleast 1 alphabet, 1 number & 1 special character";
+            model.addAttribute("passwordTypeError", error);
+            return "users/registration";
+        }
     }
 
+    //Method for password validation
+    private Boolean ValidatePwd(String enteredPassword) {
+        String passwordPattern = "((?=.*\\d)(?=.*[a-zA-Z])(?=.*[^a-zA-Z\\d]).{3,})";
+        Pattern pattern = Pattern.compile(passwordPattern);
+        Matcher matcher = pattern.matcher(enteredPassword);
+        return matcher.matches();
+    }
     //This controller method is called when the request pattern is of type 'users/login'
     @RequestMapping("users/login")
     public String login() {
